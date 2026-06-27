@@ -1,0 +1,26 @@
+{
+  "name": "hamlet-plugin-template",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "A plugin template for hamlet",
+  "license": "MIT",
+  "keywords": [
+    "hamlet",
+    "hamlet-plugin"
+  ],
+  "exports": {
+    ".": "./index.js"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest run",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^9.1.0",
+    "eslint": "^10.6.0",
+    "handlebars": "^4.7.9",
+    "vitest": "^4.1.9"
+  }
+}
