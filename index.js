@@ -1,3 +1,5 @@
+import { partials } from './lib/partials.js'
+
 /**
  * Hamlet plugin template.
  *
@@ -9,31 +11,21 @@
  *     so you only need to define short names here.
  *
  *   - partials: An object of Handlebars partials. Use short names
- *     without the namespace prefix (e.g. "card", not "MyPlugin.card").
+ *     without the namespace prefix (e.g. "card", not "Sample.card").
  *     Hamlet registers them as "<namespace>.<name>" automatically.
- *     Usage in templates: {{> MyPlugin.card}}
+ *     Usage in templates: {{> Sample.card}}
  *
  *   - helpers: An object of Handlebars helpers. Use short camelCase
- *     names without the namespace prefix (e.g. "format", not "MyPluginFormat").
+ *     names without the namespace prefix (e.g. "format", not "SampleFormat").
  *     Hamlet registers them as "<namespace><Name>" automatically.
- *     Usage in templates: {{MyPluginFormat value}}
+ *     Usage in templates: {{SampleFormat value}}
  *
- * @param {object} options - Options from hamlet.config.js.
  * @return {{namespace: string, partials: object, helpers: object}}
  */
-export default function hamletPlugin(options = {}) {
-  const { greeting = 'Hello World' } = options
-
+export default function hamletPlugin() {
   return {
-    namespace: 'MyPlugin',
-
-    partials: {
-      // Registered as "MyPlugin.hello" {{> MyPlugin.hello}}
-      hello: `MyPlugin says: {{MyPluginShout greeting}}`,
-    },
-    helpers: {
-      // Registered as "MyPluginShout" {{MyPluginShout "Hello World"}}
-      shout: text => `${text ?? greeting}!`.toUpperCase(),
-    },
+    namespace: 'Sample',
+    partials,
+    helpers: {},
   }
 }
