@@ -11,8 +11,13 @@
   "exports": {
     ".": "./index.js"
   },
-  "main": "index.js",
+  "files": [
+    "index.js",
+    "lib"
+  ],
   "scripts": {
+    "build:partials": "node ./scripts/build-partials.js",
+    "prepublishOnly": "npm run build:partials",
     "test": "vitest run",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
@@ -20,6 +25,7 @@
   "devDependencies": {
     "@antfu/eslint-config": "^9.1.0",
     "eslint": "^10.7.0",
+    "glob": "^13.0.0",
     "handlebars": "^4.7.9",
     "vitest": "^4.1.10"
   }
