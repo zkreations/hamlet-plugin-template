@@ -4,19 +4,19 @@
  * Export a factory function that receives the options from
  * hamlet.config.js and returns:
  *
- *   - namespace: A unique plugin namespace. All exported partials and
- *     helpers must use this namespace to avoid collisions.
+ *   - namespace: A unique plugin namespace. Hamlet uses it to
+ *     prefix all exported partials and helpers automatically,
+ *     so you only need to define short names here.
  *
- *   - partials: An object of Handlebars partials. Every partial name
- *     must be prefixed with "<namespace>." (e.g. "myPlugin.card").
+ *   - partials: An object of Handlebars partials. Use short names
+ *     without the namespace prefix (e.g. "card", not "MyPlugin.card").
+ *     Hamlet registers them as "<namespace>.<name>" automatically.
+ *     Usage in templates: {{> MyPlugin.card}}
  *
- *   - helpers: An object of Handlebars helpers. Every helper name must
- *     be prefixed with the namespace (e.g. "myPluginFormat"). Dots are
- *     not allowed because Handlebars interprets them as property paths.
- *
- * The example below exports one partial and one helper. Replace them
- * with your own implementation, or start with empty { partials, helpers }
- * objects while keeping the namespace consistent.
+ *   - helpers: An object of Handlebars helpers. Use short camelCase
+ *     names without the namespace prefix (e.g. "format", not "MyPluginFormat").
+ *     Hamlet registers them as "<namespace><Name>" automatically.
+ *     Usage in templates: {{MyPluginFormat value}}
  *
  * @param {object} options - Options from hamlet.config.js.
  * @return {{namespace: string, partials: object, helpers: object}}
@@ -28,12 +28,12 @@ export default function hamletPlugin(options = {}) {
     namespace: 'MyPlugin',
 
     partials: {
-      // Usage in a .hbs file: {{> myPlugin.hello}}
-      'myPlugin.hello': `MyPlugin says: {{myPluginShout greeting}}`,
+      // Registered as "MyPlugin.hello" {{> MyPlugin.hello}}
+      hello: `MyPlugin says: {{MyPluginShout greeting}}`,
     },
     helpers: {
-      // Usage in a .hbs file: {{myPluginShout "Hello World"}}
-      myPluginShout: text => `${text ?? greeting}!`.toUpperCase(),
+      // Registered as "MyPluginShout" {{MyPluginShout "Hello World"}}
+      shout: text => `${text ?? greeting}!`.toUpperCase(),
     },
   }
 }
