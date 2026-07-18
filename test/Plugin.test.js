@@ -26,9 +26,7 @@ const RESERVED_HELPERS = new Set([
   'last',
 ])
 
-const isHamletReserved = name => name.startsWith('hamlet.')
-
-const PARTIAL_NAME_PATTERN = /^[A-Z][A-Z0-9]*(?:[._-][A-Z][A-Z0-9]*)*$/i
+const PARTIAL_NAME_PATTERN = /^[A-Z][A-Z0-9]*(?:[_-][A-Z][A-Z0-9]*)*$/i
 const HELPER_NAME_PATTERN = /^[A-Z][A-Z0-9]*(?:[-_][A-Z][A-Z0-9]*)*$/i
 const BLOCKED_NAMES = new Set(['__proto__', 'constructor', 'prototype'])
 
@@ -43,50 +41,96 @@ it('plugin() returns an object with partials/helpers', () => {
   assert.ok(result.helpers === undefined || typeof result.helpers === 'object')
 })
 
-it('partials do not collide with reserved hamlet names', () => {
-  const { partials = {} } = plugin({})
+it('namespace is not reserved (hamlet is not allowed)', () => {
+  const { namespace } = plugin({})
+
+  assert.ok(
+    namespace.toLowerCase() !== 'hamlet',
+    `The namespace "hamlet" is reserved by hamlet-builder and cannot be used by plugins`,
+  )
+})
+
+it('plugin exports a valid namespace', () => {
+  const { namespace } = plugin({})
+
+  assert.equal(typeof namespace, 'string', 'Plugin must export a string "namespace"')
+  assert.match(
+    namespace,
+    /^[A-Z][A-Z0-9]*$/i,
+    'Namespace must start with a letter and contain only letters and digits',
+  )
+})
+
+it('partial short names do not include the namespace prefix', () => {
+  const { namespace, partials = {} } = plugin({})
 
   for (const name of Object.keys(partials)) {
     assert.ok(
-      !isHamletReserved(name),
-      `Partial "${name}" collides with a built-in hamlet partial`,
+      !name.startsWith(`${namespace}.`),
+      `Partial "${name}" must be a short name without the namespace prefix. `
+      + `Hamlet registers it as "${namespace}.${name}" automatically.`,
     )
   }
 })
 
-it('helpers do not collide with reserved hamlet helpers', () => {
-  const { helpers = {} } = plugin({})
+it('helper short names do not include the namespace prefix', () => {
+  const { namespace, helpers = {} } = plugin({})
+  const prefixRe = new RegExp(`^${namespace}[A-Z]`, 'i')
 
   for (const name of Object.keys(helpers)) {
     assert.ok(
-      !RESERVED_HELPERS.has(name),
-      `Helper "${name}" collides with a built-in hamlet helper ("${name}" is reserved)`,
+      !prefixRe.test(name),
+      `Helper "${name}" must be a short name without the namespace prefix. `
+      + `Hamlet registers it as "${namespace}${name.charAt(0).toUpperCase()}${name.slice(1)}" automatically.`,
     )
   }
 })
 
-it('partial names match hamlet\'s naming policy (dots allowed)', () => {
+it('partial short names match hamlet\'s naming policy', () => {
   const { partials = {} } = plugin({})
 
   for (const name of Object.keys(partials)) {
     assert.ok(
       PARTIAL_NAME_PATTERN.test(name),
       `Partial "${name}" does not match hamlet's allowed name pattern `
-      + '(letter start, letters/digits, optional ".", "-" or "_" separators)',
+      + '(letter start, letters/digits, optional "-" or "_" separators). '
+      + 'Dots are not allowed in short names — the namespace separator is added automatically.',
     )
   }
 })
 
-it('helper names match hamlet\'s naming policy (no dots allowed)', () => {
+it('helper short names match hamlet\'s naming policy (no dots allowed)', () => {
   const { helpers = {} } = plugin({})
 
   for (const name of Object.keys(helpers)) {
     assert.ok(
       HELPER_NAME_PATTERN.test(name),
       `Helper "${name}" does not match hamlet's allowed name pattern, or contains a dot. `
-      + 'Helpers cannot be dot-namespaced: Handlebars parses "{{a.b}}" as a property path '
-      + 'on the data context, never as a helper name — a dotted helper registers without '
-      + 'error but is unreachable from any template (use camelCase or dashes instead).',
+      + 'Use camelCase or dashes for multi-word helper names (e.g. "formatDate").',
+    )
+  }
+})
+
+it('the computed full partial names do not collide with reserved hamlet names', () => {
+  const { namespace, partials = {} } = plugin({})
+
+  for (const name of Object.keys(partials)) {
+    const fullName = `${namespace}.${name}`
+    assert.ok(
+      !fullName.startsWith('hamlet.'),
+      `Partial "${name}" would be registered as "${fullName}", which collides with a built-in hamlet partial`,
+    )
+  }
+})
+
+it('the computed full helper names do not collide with reserved hamlet helpers', () => {
+  const { namespace, helpers = {} } = plugin({})
+
+  for (const name of Object.keys(helpers)) {
+    const fullName = `${namespace}${name.charAt(0).toUpperCase()}${name.slice(1)}`
+    assert.ok(
+      !RESERVED_HELPERS.has(fullName),
+      `Helper "${name}" would be registered as "${fullName}", which collides with a built-in hamlet helper`,
     )
   }
 })
@@ -99,13 +143,12 @@ it('helpers are not nested objects (a common attempt at dot-namespacing)', () =>
       typeof value === 'function',
       `Helper "${name}" is not a function (got ${typeof value}). If this is an attempt to `
       + 'namespace helpers like { myPlugin: { shout: fn } }, note that Handlebars cannot '
-      + 'call nested helpers this way — "{{myPlugin.shout}}" looks up a property path, '
-      + 'not a nested helper, and would fail with "Missing helper" at render time.',
+      + 'call nested helpers this way.',
     )
   }
 })
 
-it('partial and helper names are not on hamlet\'s blocked list', () => {
+it('partial and helper short names are not on hamlet\'s blocked list', () => {
   const { partials = {}, helpers = {} } = plugin({})
 
   for (const name of [...Object.keys(partials), ...Object.keys(helpers)]) {
@@ -133,35 +176,5 @@ it('helpers are functions', () => {
 
   for (const [name, fn] of Object.entries(helpers)) {
     assert.equal(typeof fn, 'function', `Helper "${name}" must be a function`)
-  }
-})
-
-it('plugin namespaces its exported names', () => {
-  const { namespace, partials = {}, helpers = {} } = plugin({})
-
-  assert.equal(
-    typeof namespace,
-    'string',
-    'Plugin must export a string "namespace"',
-  )
-
-  assert.match(
-    namespace,
-    /^[A-Z][A-Z0-9]*$/i,
-    'Namespace must start with a letter and contain only letters and digits',
-  )
-
-  for (const name of Object.keys(partials)) {
-    assert.ok(
-      name.startsWith(`${namespace}.`),
-      `Partial "${name}" must be prefixed with "${namespace}."`,
-    )
-  }
-
-  for (const name of Object.keys(helpers)) {
-    assert.ok(
-      new RegExp(`^${namespace}[A-Z]`).test(name),
-      `Helper "${name}" must be prefixed with "${namespace}" followed by an uppercase letter (e.g. "${namespace}Format")`,
-    )
   }
 })
