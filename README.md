@@ -6,7 +6,7 @@ Base template for creating Hamlet plugins.
 
 1. Rename the package in `package.json` (e.g. `@scope/hamlet-feature` or `hamlet-plugin-feature`).
 2. Add your Handlebars partials as `.hbs` (or `.xml`, `.handlebars`) files inside `src/`.
-3. Implement helpers and set the namespace in `index.js`.
+3. Implement helpers, context, and set the namespace in `index.js`.
 4. Run `npm run build:partials` to generate `lib/partials.js` from your source files.
 5. Run the tests.
 6. Publish to npm.
@@ -60,9 +60,12 @@ export default function hamletPlugin(options = {}) {
     namespace: 'Sample',
     partials,
     helpers: {},
+    context: {},
   }
 }
 ```
+
+All keys except `namespace` are optional. A minimal valid plugin only needs a `namespace`.
 
 ### namespace
 
@@ -119,6 +122,31 @@ This registers the helper as `SampleShout`, usable in templates as:
 
 Helper names cannot contain dots because Handlebars interprets them as property paths.
 
+### context
+
+An optional plain object with data that the plugin wants to expose to all Handlebars templates. Hamlet merges it into the template context under the plugin's namespace key.
+
+```js
+export default function hamletPlugin(options = {}) {
+  return {
+    namespace: 'Sample',
+    context: {
+      spriteUrl: options.spriteUrl ?? '/icons.svg',
+      version: '2.0',
+    },
+  }
+}
+```
+
+In any template, the data is accessible as `{{<namespace>.<key>}}`:
+
+```hbs
+{{Sample.spriteUrl}}
+{{Sample.version}}
+```
+
+The context is frozen after registration — mutations at runtime have no effect. If `context` is present but is not a plain object, it will be ignored and a warning will be printed.
+
 ## Name collisions
 
 Hamlet follows a **first registered wins** policy.
@@ -167,6 +195,7 @@ The test suite verifies that:
 - No computed full name collides with Hamlet's reserved partials or helpers.
 - Partials are strings and compile without Handlebars syntax errors.
 - Helpers are functions (not nested objects).
+- If present, `context` is a plain object (not an array, not null).
 - No name is on Hamlet's blocked list (`__proto__`, `constructor`, `prototype`).
 
 Feel free to extend the tests with plugin-specific behavior or option validation.

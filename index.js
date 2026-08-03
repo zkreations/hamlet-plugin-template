@@ -20,12 +20,18 @@ import { partials } from './lib/partials.js'
  *     Hamlet registers them as "<namespace><Name>" automatically.
  *     Usage in templates: {{SampleFormat value}}
  *
- * @return {{namespace: string, partials: object, helpers: object}}
+ *   - context: An optional plain object with data to expose to all
+ *     Handlebars templates. Hamlet merges it under the plugin namespace,
+ *     so there are no collisions with the global context or other plugins.
+ *     Usage in templates: {{Sample.myValue}}
+ *
+ * @return {{namespace: string, partials: object, helpers: object, context: object}}
  */
 export default function hamletPlugin() {
   return {
     namespace: 'Sample',
     partials,
     helpers: {},
+    context: {},
   }
 }
