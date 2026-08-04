@@ -34,11 +34,12 @@ it('plugin exports a function (factory)', () => {
   assert.equal(typeof plugin, 'function', 'default export must be a function that returns { partials, helpers }')
 })
 
-it('plugin() returns an object with partials/helpers', () => {
+it('plugin() returns an object with partials/helpers/context', () => {
   const result = plugin({})
   assert.equal(typeof result, 'object')
   assert.ok(result.partials === undefined || typeof result.partials === 'object')
   assert.ok(result.helpers === undefined || typeof result.helpers === 'object')
+  assert.ok(result.context === undefined || typeof result.context === 'object')
 })
 
 it('namespace is not reserved (hamlet is not allowed)', () => {
@@ -177,4 +178,17 @@ it('helpers are functions', () => {
   for (const [name, fn] of Object.entries(helpers)) {
     assert.equal(typeof fn, 'function', `Helper "${name}" must be a function`)
   }
+})
+
+it('context, if present, is a plain object (not null, not an array)', () => {
+  const { context } = plugin({})
+
+  if (!('context' in plugin({})))
+    return
+
+  assert.ok(
+    context !== null && typeof context === 'object' && !Array.isArray(context),
+    `context must be a plain object if defined (got ${
+      context === null ? 'null' : Array.isArray(context) ? 'array' : typeof context})`,
+  )
 })
