@@ -147,6 +147,17 @@ In any template, the data is accessible as `{{<namespace>.<key>}}`:
 
 The context is frozen after registration — mutations at runtime have no effect. If `context` is present but is not a plain object, it will be ignored and a warning will be printed.
 
+#### Self-referencing context inside partials
+
+When a partial needs to reference its own plugin's context, avoid hardcoding the namespace. Use the `{{_self.key}}` alias instead:
+
+```hbs
+{{!-- src/card.hbs --}}
+<img src="{{_self.spriteUrl}}"/>
+```
+
+`build-partials.js` replaces every `{{_self.` occurrence with `{{<namespace>.` at build time, so the published `lib/partials.js` always contains the correct namespace. This means renaming the namespace in `index.js` and re-running `npm run build:partials` is all that's needed — no partial file needs to be touched.
+
 ## Name collisions
 
 Hamlet follows a **first registered wins** policy.
@@ -196,6 +207,7 @@ The test suite verifies that:
 - Partials are strings and compile without Handlebars syntax errors.
 - Helpers are functions (not nested objects).
 - If present, `context` is a plain object (not an array, not null).
+- No `{{_self.` references remain in compiled partials (i.e. `build:partials` was run).
 - No name is on Hamlet's blocked list (`__proto__`, `constructor`, `prototype`).
 
 Feel free to extend the tests with plugin-specific behavior or option validation.
