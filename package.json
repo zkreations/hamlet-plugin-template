@@ -17,7 +17,7 @@
   ],
   "scripts": {
     "build:partials": "node ./scripts/build-partials.js",
-    "prepublishOnly": "npm test && npm run build:partials",
+    "prepublishOnly": "npm run build:partials && npm test",
     "test": "vitest run",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
