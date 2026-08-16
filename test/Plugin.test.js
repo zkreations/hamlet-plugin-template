@@ -180,6 +180,18 @@ it('helpers are functions', () => {
   }
 })
 
+it('partials contain no unresolved _self references (build-partials must be run before publishing)', () => {
+  const { partials = {} } = plugin({})
+
+  for (const [name, template] of Object.entries(partials)) {
+    assert.ok(
+      !template.includes('{{_self.'),
+      `Partial "${name}" still contains "{{_self." references. `
+      + 'Run "npm run build:partials" to resolve them before publishing.',
+    )
+  }
+})
+
 it('context, if present, is a plain object (not null, not an array)', () => {
   const { context } = plugin({})
 
